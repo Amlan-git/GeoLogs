@@ -27,6 +27,7 @@ func NewRouter(ping func(context.Context) error, allowedOrigins string, catalog 
 
 	if catalog != nil {
 		registerCatalog(router, catalog)
+		registerLocation(router, catalog)
 	}
 
 	origins := strings.Split(allowedOrigins, ",")

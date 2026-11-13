@@ -35,22 +35,22 @@ GeoLog is a fleet operations dashboard for drawing zones, registering vehicles, 
 - `POST /alerts/configure` returns `404` for an unknown `geofence_id` or supplied `vehicle_id`, and `400` for an invalid `event_type`. For all-vehicle rules, return `vehicle_id: null` in the create response and both `vehicle_id: null` and `vehicle_number: null` in `GET /alerts`.
 - `GET /alerts?vehicle_id=X` returns rules scoped to that specific vehicle only.
 - `GET /alerts` lists active and inactive rules in the brief's response shape. `PATCH /alerts/{alert_id}` accepts `{"status":"active"}` or `{"status":"inactive"}` and returns the create response shape with the updated status and `time_ns`. Invalid status is `400`, unknown ID is `404`. The rules list has a switch on each row and visually mutes inactive rules. Keep rule records so stored alerts remain traceable.
-- All categories use the same matching logic. For `restricted_zone`, the create form offers a default-on checkbox to configure a `both` rule for all vehicles. It uses a separate `POST /alerts/configure` after saving the zone. If the rule request fails, keep the zone visible and show a persistent, dismissible warning and a one-click Retry for that rule request. Show **No alerts configured** for restricted zones with zero active rules. A lost success response can lead to duplicate rules on retry. The crossing still yields at most one alert. Use stronger red styling for restricted-zone alerts in the feed and toast.
+- All categories use the same matching logic. For `restricted_zone`, the create form offers a default-on checkbox to configure a `both` rule for all vehicles. It uses a separate `POST /alerts/configure` after saving the zone. If the rule request fails, keep the zone visible and show a persistent, dismissible warning and a one-click Retry for that rule request. A lost success response can lead to duplicate rules on retry. The crossing still yields at most one alert. Use stronger red styling for restricted-zone alerts in the feed and toast.
 
 ## History
 
 - Filter by vehicle, geofence, and inclusive crossing timestamps. Parse dates as RFC 3339. Invalid dates and a start after the end return `400`. Unknown or malformed filter IDs yield an empty list with `total_count: 0`.
 - Sort by timestamp descending and numeric key descending. Default `limit` to 50 and clamp it at 500. Default `offset` to 0. Reject nonnumeric values, limits below 1, and negative offsets with `400`. An offset past the end returns `[]` and the correct filtered count.
 - Run a separate count with the same filters and without pagination, in the same read snapshot as the page. Index history by timestamp and numeric key descending, with additional indexes prefixed by vehicle ID and by geofence ID.
-- Show 50 rows per page with Previous and Next and page numbers derived from `total_count`. Reset to page 1 when filters change. Keep filters and page in the URL and retain the previous page while the next loads.
+- Show 50 rows per page with Previous and Next and page numbers derived from `total_count`. Reset to page 1 when filters change. Retain the previous page while the next loads.
 
 ## Live delivery
 
 - Use one backend instance and one hub goroutine that owns the client registry. Register, unregister, and broadcast through channels. The location service depends on a small publisher interface.
 - After commit, enqueue the alert with a non-blocking send to a 256-message queue. Log and drop the live notification if full. Encode the payload once for all clients. Give each client a 32-message buffer and one writer with a write deadline. Disconnect a client whose buffer fills. The database remains the durable record.
-- Ping roughly every 30 seconds and drop clients that have gone about 60 seconds without answering. On SIGTERM, stop accepting requests, allow a short queue drain, then send WebSocket close frames. The hub sends only the brief's alert format on `/ws/alerts`.
+- Ping roughly every 30 seconds and drop clients that have gone about 60 seconds without answering. On SIGTERM, stop accepting requests, then send WebSocket close frames. The hub sends only the brief's alert format on `/ws/alerts`.
 - Keep one socket per tab. Close the old socket before replacement and on unmount. Reconnect with 1, 2, 4, 8 seconds and increasing delays capped at 30 seconds, with jitter. Reset after connecting. Reconnect immediately when the browser comes online or the tab becomes visible if disconnected. Show Live, Reconnecting, or Offline.
-- On reconnect, refresh vehicle statuses and refresh history if open. Add a gap notice showing the outage window with a link to history filtered to that time. The live feed resumes with new alerts, deduplicated by `event_id`, and retains the latest 100 alerts. An incoming alert refreshes that vehicle's status and invalidates violations queries.
+- On reconnect, refresh vehicle statuses and refresh history if open. The live feed resumes with new alerts, deduplicated by `event_id`, and retains the latest 100 alerts. An incoming alert refreshes that vehicle's status and invalidates violations queries.
 
 ## Application structure and frontend data
 
@@ -58,7 +58,7 @@ GeoLog is a fleet operations dashboard for drawing zones, registering vehicles, 
 - Use one `fetch` module with the build-time API URL. Throw on non-2xx responses with the server's error message. Centralize TanStack Query keys for geofences by category, vehicles, status by vehicle ID, rules, and violations by filters and page. Keep map markers and vehicle rows on the same status cache entry.
 - Creating a zone refreshes geofences. Creating a vehicle refreshes vehicles. Posting a location refreshes that vehicle's status. Creating or toggling rules refreshes rules. Read requests can retry network failures a small number of times. Writes and `4xx` responses skip automatic retries.
 - Keep form drafts, drawing state, vehicle selection, map view, and live feed in React state. One top-level provider owns the socket, status, and feed. Show loading and error states for API operations.
-- Poll every 10 seconds while visible. Each cycle reloads vehicles and fetches their statuses in parallel. Refresh immediately on becoming visible, skip ticks during an in-flight cycle, and clean up on unmount. Preserve last good markers on failure, keep the last successful update time visible, and skip poll error toasts. Preserve unchanged cache references and memoize rows and markers where useful.
+- Poll every 10 seconds while visible. Each cycle reloads vehicles and fetches their statuses in parallel. Refresh immediately on becoming visible, skip ticks during an in-flight cycle, and clean up on unmount. Preserve last good markers on failure, and skip poll error toasts. Preserve unchanged cache references and memoize rows and markers where useful.
 - Use a single dashboard with map, vehicles, geofences, rules, and history views. Display **Awaiting first location** with no marker or zone chips before the first report. Fix Leaflet marker asset paths for Vite. Prevent self-intersection in Geoman, close the ring before submission, and allow map clicks or manual coordinates for location updates. Start with an empty database and use synthetic demo data.
 
 ## Infrastructure and build order
@@ -80,3 +80,11 @@ GeoLog is a fleet operations dashboard for drawing zones, registering vehicles, 
 - Scope gaps for the video include first-observed timestamps, late samples and potential history reconstruction, planar geometry for city-sized zones, and GPS jitter that could later be handled with hysteresis. Discuss offset page shifts, expensive deep offsets and counts, and a possible keyset migration.
 - Also discuss request-per-vehicle polling and a future scoped position channel, best-effort notification loss on restart or queue saturation, outage history with exact replay deferred, and a shared event channel for multiple backend instances. Guaranteed delivery would pair an outbox with client cursors. Rule analytics could move the stored rule ID array to a link table.
 - Authentication, tenant scoping, rate limiting, route replay, third-party telematics, hard deletion, and an actor audit trail are outside this submission. Sequential public IDs are guessable. A future multi-tenant version would scope every query and could add opaque IDs. Duplicate rules after a lost response are a known retry limitation.
+
+## Known gaps from the agreed scope cuts
+
+1. The live feed omits the outage gap notice and its link to filtered history.
+2. History keeps filter and pagination state in the UI instead of the URL.
+3. The geofence list omits the **No alerts configured** badge.
+4. Vehicle polling omits the **Last updated** indicator.
+5. Shutdown closes WebSockets without draining the pending live-alert queue. Stored records remain available.

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"geolog/internal/httpapi"
+	"geolog/internal/ids"
 	"geolog/internal/service"
 	"geolog/migrations"
 
@@ -79,6 +80,7 @@ func TestCatalogWithPostGIS(t *testing.T) {
 	}
 	request(http.MethodPost, "/geofences", zone(ring)+" {}", 400)
 	created := request(http.MethodPost, "/geofences", zone(ring), 201)
+	defer deleteCatalogFixture(t, pool, "geofence", created["id"])
 	if !strings.HasPrefix(string(created["id"]), `"geo_`) || string(created["status"]) != `"active"` || string(created["name"]) != `"Downtown Delivery Zone"` || len(created) != 4 {
 		t.Fatalf("invalid geofence response: %v", created)
 	}
@@ -116,6 +118,7 @@ func TestCatalogWithPostGIS(t *testing.T) {
 	request(http.MethodPost, "/vehicles", `{"vehicle_number":"KA-01"}`, 400)
 	request(http.MethodPost, "/vehicles", "{", 400)
 	created = request(http.MethodPost, "/vehicles", vehicle("  KA-01  "), 201)
+	defer deleteCatalogFixture(t, pool, "vehicle", created["id"])
 	if !strings.HasPrefix(string(created["id"]), `"veh_`) || string(created["vehicle_number"]) != `"KA-01"` || len(created) != 4 {
 		t.Fatalf("invalid vehicle response: %v", created)
 	}
@@ -147,5 +150,26 @@ func assertWholeSecondUTC(t *testing.T, value string) {
 	parsed, err := time.Parse(time.RFC3339, value)
 	if err != nil || parsed.UTC().Format(time.RFC3339) != value {
 		t.Fatalf("expected UTC timestamp with whole seconds, got %q", value)
+	}
+}
+
+func deleteCatalogFixture(t *testing.T, pool *pgxpool.Pool, kind string, raw json.RawMessage) {
+	t.Helper()
+	var publicID string
+	if err := json.Unmarshal(raw, &publicID); err != nil {
+		t.Error(err)
+		return
+	}
+	query, parse := "DELETE FROM geofences WHERE id=$1", ids.ParseGeofence
+	if kind == "vehicle" {
+		query, parse = "DELETE FROM vehicles WHERE id=$1", ids.ParseVehicle
+	}
+	id, err := parse(publicID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if _, err := pool.Exec(context.Background(), query, id); err != nil {
+		t.Error(err)
 	}
 }
