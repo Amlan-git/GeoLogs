@@ -21,11 +21,12 @@ type ValidationError string
 func (e ValidationError) Error() string { return string(e) }
 
 type Catalog struct {
-	pool *pgxpool.Pool
+	pool      *pgxpool.Pool
+	publisher AlertPublisher
 }
 
-func NewCatalog(pool *pgxpool.Pool) *Catalog {
-	return &Catalog{pool: pool}
+func NewCatalog(pool *pgxpool.Pool, publisher AlertPublisher) *Catalog {
+	return &Catalog{pool: pool, publisher: publisher}
 }
 
 func (c *Catalog) CreateGeofence(ctx context.Context, zone domain.Geofence) (int64, error) {

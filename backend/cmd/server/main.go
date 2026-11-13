@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"geolog/internal/httpapi"
+	"geolog/internal/realtime"
 	"geolog/internal/service"
 	"geolog/migrations"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -54,9 +55,12 @@ func run() error {
 	if port == "" {
 		port = "8080"
 	}
+	origins := os.Getenv("ALLOWED_ORIGINS")
+	hub := realtime.NewHub(origins)
+	defer hub.Close()
 	server := &http.Server{
 		Addr:              net.JoinHostPort("0.0.0.0", port),
-		Handler:           httpapi.NewRouter(pool.Ping, os.Getenv("ALLOWED_ORIGINS"), service.NewCatalog(pool)),
+		Handler:           httpapi.NewRouter(pool.Ping, origins, service.NewCatalog(pool, hub), hub),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	serverErrors := make(chan error, 1)

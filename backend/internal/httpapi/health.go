@@ -11,7 +11,7 @@ import (
 	"geolog/internal/service"
 )
 
-func NewRouter(ping func(context.Context) error, allowedOrigins string, catalog *service.Catalog) http.Handler {
+func NewRouter(ping func(context.Context) error, allowedOrigins string, catalog *service.Catalog, alerts http.Handler) http.Handler {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
@@ -28,6 +28,11 @@ func NewRouter(ping func(context.Context) error, allowedOrigins string, catalog 
 	if catalog != nil {
 		registerCatalog(router, catalog)
 		registerLocation(router, catalog)
+		registerAlerts(router, catalog)
+	}
+
+	if alerts != nil {
+		router.Handle("GET /ws/alerts", alerts)
 	}
 
 	origins := strings.Split(allowedOrigins, ",")

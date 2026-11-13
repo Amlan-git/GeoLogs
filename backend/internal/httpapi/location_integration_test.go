@@ -52,7 +52,7 @@ func TestLocationsAndHistoryWithPostGIS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	h := httpapi.NewRouter(pool.Ping, "", service.NewCatalog(pool))
+	h := httpapi.NewRouter(pool.Ping, "", service.NewCatalog(pool, nil), nil)
 	request := func(t *testing.T, method, path, body string, status int) locationReply {
 		t.Helper()
 		res := httptest.NewRecorder()

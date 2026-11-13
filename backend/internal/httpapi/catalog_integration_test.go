@@ -33,7 +33,7 @@ func TestCatalogWithPostGIS(t *testing.T) {
 	if err := migrations.Up(*pool.Config().ConnConfig); err != nil {
 		t.Fatal(err)
 	}
-	h := httpapi.NewRouter(pool.Ping, "", service.NewCatalog(pool))
+	h := httpapi.NewRouter(pool.Ping, "", service.NewCatalog(pool, nil), nil)
 	request := func(method, path, body string, status int) map[string]json.RawMessage {
 		t.Helper()
 		res := httptest.NewRecorder()

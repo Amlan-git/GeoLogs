@@ -15,8 +15,6 @@ var ErrVehicleNotFound = errors.New("vehicle not found")
 type LocationResult struct {
 	Updated     bool
 	Memberships []domain.Membership
-	// Crossing IDs become available to the caller only after commit.
-	Crossings []domain.Crossing
 }
 
 func (c *Catalog) UpdateLocation(ctx context.Context, id int64, point domain.Sample) (result LocationResult, err error) {
@@ -28,6 +26,7 @@ func (c *Catalog) UpdateLocation(ctx context.Context, id int64, point domain.Sam
 	}
 	// PostgreSQL timestamps have microsecond precision. Compare at the same precision as storage.
 	point.Timestamp = point.Timestamp.Truncate(time.Microsecond)
+	var alerts []domain.Alert
 	err = pgx.BeginFunc(ctx, c.pool, func(tx pgx.Tx) error {
 		latest, err := store.LockVehicle(ctx, tx, id)
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -66,11 +65,18 @@ func (c *Catalog) UpdateLocation(ctx context.Context, id int64, point domain.Sam
 			}
 		}
 		if len(entries)+len(exits) > 0 {
-			result.Crossings, err = store.RecordCrossings(ctx, tx, id, point, entries, exits)
+			crossings, err := store.RecordCrossings(ctx, tx, id, point, entries, exits)
 			if err != nil {
 				return err
 			}
-			// Stage 4 matches rules and stores alerts here, using these crossings and tx.
+			ids := make([]int64, len(crossings))
+			for i, crossing := range crossings {
+				ids[i] = crossing.ID
+			}
+			alerts, err = store.StoreMatchingAlerts(ctx, tx, ids)
+			if err != nil {
+				return err
+			}
 		}
 		result.Updated = true
 		result.Memberships = current
@@ -79,7 +85,11 @@ func (c *Catalog) UpdateLocation(ctx context.Context, id int64, point domain.Sam
 	if err != nil {
 		return LocationResult{}, err
 	}
-	// Stage 4 publishes committed alerts here.
+	if c.publisher != nil {
+		for _, alert := range alerts {
+			c.publisher.Publish(alert)
+		}
+	}
 	return result, nil
 }
 

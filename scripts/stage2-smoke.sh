@@ -53,6 +53,7 @@ check 201 POST /geofences "${json[@]}" @- <<'JSON'
   "category": "delivery_zone"
 }
 JSON
+created_geofence=$last_body
 check 400 POST /geofences "${json[@]}" '{"name":"Bow-tie","coordinates":[[0,0],[1,1],[0,1],[1,0],[0,0]],"category":"delivery_zone"}'
 check 400 POST /geofences "${json[@]}" '{"name":"Unclosed","coordinates":[[0,0],[1,0],[1,1],[0,1]],"category":"delivery_zone"}'
 check 200 GET '/geofences?category=delivery_zone'
@@ -68,6 +69,9 @@ created_vehicle=$last_body
 check 409 POST /vehicles "${json[@]}" '{"vehicle_number":"ka-01-ab-1234","driver_name":"John Doe","vehicle_type":"truck","phone":"+1234567890"}'
 check 400 POST /vehicles "${json[@]}" '{"vehicle_number":"KA-02-AB-1234","driver_name":"John Doe","vehicle_type":"truck"}'
 vehicle_id=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$created_vehicle")
+geofence_id=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$created_geofence")
+check 201 POST /alerts/configure "${json[@]}" \
+    "{\"geofence_id\":\"$geofence_id\",\"event_type\":\"both\"}"
 check 200 GET "/vehicles/location/$vehicle_id"
 python3 -c 'import json,sys; d=json.loads(sys.argv[1]); assert d["current_location"] is None and d["current_geofences"] == []' "$last_body"
 

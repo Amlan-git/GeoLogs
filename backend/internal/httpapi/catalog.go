@@ -120,7 +120,7 @@ func writeServiceError(w http.ResponseWriter, started time.Time, err error) {
 	switch {
 	case errors.As(err, &validation):
 		status, message = http.StatusBadRequest, validation.Error()
-	case errors.Is(err, service.ErrVehicleNotFound):
+	case errors.Is(err, service.ErrVehicleNotFound), errors.Is(err, service.ErrGeofenceNotFound), errors.Is(err, service.ErrRuleNotFound):
 		status, message = http.StatusNotFound, err.Error()
 	case errors.Is(err, service.ErrConflict):
 		status, message = http.StatusConflict, err.Error()
