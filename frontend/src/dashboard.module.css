@@ -1,0 +1,13 @@
+.header { min-height: 64px; padding: 12px clamp(16px, 4vw, 48px); display: flex; align-items: center; gap: 18px; background: #122038; color: white; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 750; letter-spacing: -.04em; }
+.brandMark { background: #bdf2e2; color: #0b493d; border-radius: 8px; width: 33px; height: 33px; display: grid; place-items: center; }
+.headerLabel { color: #c2cde0; border-left: 1px solid #536176; padding-left: 18px; font-size: 14px; }
+.main { max-width: 1460px; margin: 0 auto; padding: 24px clamp(12px, 4vw, 48px) 48px; }
+.main h1 { margin: 0 0 18px; font-size: clamp(25px, 4vw, 34px); letter-spacing: -.035em; }
+.mapPanel { border: 1px solid #d9e0e9; border-radius: 14px; overflow: hidden; background: white; }
+.legend { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; }
+.map { height: clamp(330px, 55vh, 620px); background: #e1e9ed; }
+.feedback { font-size: 14px; }
+.feedback [role="alert"] { color: #a22738; }
