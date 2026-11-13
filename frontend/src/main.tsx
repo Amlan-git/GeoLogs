@@ -79,7 +79,7 @@ function Dashboard() {
             <LocationForm vehicles={vehicles} vehicleID={vehicleID} setVehicleID={setVehicleID} point={point} setPoint={setPoint} mode={mode} onMode={changeMode} onSubmitted={() => changeMode("browse")} />
           </section>
           <section className={styles.panel}>
-            <ZoneForm ring={ring} mode={mode} onMode={changeMode} clearRing={() => setRing(null)} />
+            <ZoneForm ring={ring} mode={mode} onMode={changeMode} setRing={setRing} />
           </section>
           </div>
         </div>

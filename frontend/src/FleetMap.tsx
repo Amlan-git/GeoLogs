@@ -121,7 +121,11 @@ export function FleetMap({ zones, located, mode, draft, onDraw, onPick, picked, 
     const layer = draftLayer.current;
     layer?.clearLayers();
     if (layer && draft && mode !== "draw") {
-      L.polygon(draft, { color: "#526b82", dashArray: "6 4" }).addTo(layer);
+      const polygon = L.polygon(draft, { color: "#526b82", dashArray: "6 4" }).addTo(layer);
+      const instance = map.current;
+      if (instance && !instance.getBounds().contains(polygon.getBounds())) {
+        instance.fitBounds(polygon.getBounds(), { padding: [28, 28], maxZoom: 16 });
+      }
     }
   }, [draft, mode]);
 

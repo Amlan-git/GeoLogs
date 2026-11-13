@@ -1,6 +1,7 @@
 import { memo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { write, type Category, type Coordinates, type Geofence, type Vehicle, type VehicleStatus } from "./api";
+import { parseCoordinateRing } from "./coordinates";
 import { categories } from "./categories";
 import { geofencesQuery, keys } from "./queries";
 import styles from "./dashboard.module.css";
@@ -11,13 +12,16 @@ function Feedback({ error, message }: { error: Error | null; message?: string })
   return <>{error && <p role="alert" className={styles.error}>{error.message}</p>}{message && <p role="status">{message}</p>}</>;
 }
 
-export function ZoneForm({ ring, mode, onMode, clearRing }: {
+export function ZoneForm({ ring, mode, onMode, setRing }: {
   ring: Coordinates[] | null;
   mode: MapMode;
   onMode: (mode: MapMode) => void;
-  clearRing: () => void;
+  setRing: (ring: Coordinates[] | null) => void;
 }) {
   const client = useQueryClient();
+  const [source, setSource] = useState<"map" | "coordinates">("map");
+  const [coordinates, setCoordinates] = useState("");
+  const [coordinateError, setCoordinateError] = useState<Error | null>(null);
   const [category, setCategory] = useState<Category>("delivery_zone");
   const [defaultRule, setDefaultRule] = useState(true);
   const [warning, setWarning] = useState<{ id: string; message: string } | null>(null);
@@ -32,7 +36,8 @@ export function ZoneForm({ ring, mode, onMode, clearRing }: {
   const create = useMutation({
     mutationFn: (data: Omit<Geofence, "id">) => write<{ id: string }>("/geofences", data),
     onSuccess: () => {
-      clearRing();
+      setRing(null);
+      setCoordinates("");
       void client.invalidateQueries({ queryKey: ["geofences"] });
     },
   });
@@ -60,7 +65,7 @@ export function ZoneForm({ ring, mode, onMode, clearRing }: {
 
   return (
     <form className={styles.form} onSubmit={submit}>
-      <h3>Draw a geofence</h3>
+      <h3>Create a geofence</h3>
       <label>Name<input name="name" required /></label>
       <label>Description<textarea name="description" rows={2} /></label>
       <label>Category
@@ -72,11 +77,42 @@ export function ZoneForm({ ring, mode, onMode, clearRing }: {
         <input type="checkbox" checked={defaultRule} onChange={(event) => setDefaultRule(event.target.checked)} />
         Alert on entry and exit for all vehicles
       </label>}
-      <button className={styles.secondary} type="button" disabled={create.isPending || rule.isPending} onClick={() => onMode(mode === "draw" ? "browse" : "draw")}>
-        {mode === "draw" ? "Cancel drawing" : ring ? "Redraw boundary" : "Draw boundary on map"}
-      </button>
-      {mode === "draw" && <p className={styles.muted}>Click to add vertices, then click the first point to close the polygon.</p>}
-      {ring && mode !== "draw" && <p className={styles.muted}>{ring.length - 1} vertices drawn</p>}
+      <label>Boundary input
+        <select value={source} disabled={create.isPending || rule.isPending} onChange={(event) => {
+          setSource(event.target.value === "map" ? "map" : "coordinates");
+          onMode("browse");
+          setRing(null);
+          setCoordinateError(null);
+        }}>
+          <option value="map">Draw on map</option>
+          <option value="coordinates">Enter coordinates</option>
+        </select>
+      </label>
+      {source === "map" ? <>
+        <button className={styles.secondary} type="button" disabled={create.isPending || rule.isPending}
+          onClick={() => onMode(mode === "draw" ? "browse" : "draw")}>
+          {mode === "draw" ? "Cancel drawing" : ring ? "Redraw boundary" : "Draw boundary on map"}
+        </button>
+        {mode === "draw" && <p className={styles.muted}>Click to add vertices, then click the first point to close the polygon.</p>}
+      </> : <label>Coordinates (latitude, longitude)
+        <textarea rows={4} value={coordinates} placeholder={"37.77, -122.42\n37.78, -122.42\n37.78, -122.41"}
+          disabled={create.isPending || rule.isPending}
+          onChange={(event) => {
+            const value = event.target.value;
+            setCoordinates(value);
+            setCoordinateError(null);
+            setRing(null);
+            if (!value.trim()) return;
+            try {
+              setRing(parseCoordinateRing(value));
+            } catch (error) {
+              if (error instanceof Error) setCoordinateError(error);
+            }
+          }} />
+        <span className={styles.muted}>One pair per line. The ring closes automatically.</span>
+      </label>}
+      {coordinateError && <p className={styles.error} role="alert">{coordinateError.message}</p>}
+      {ring && mode !== "draw" && <p className={styles.muted}>{ring.length - 1} vertices in preview</p>}
       <button className={styles.primary} disabled={!ring || mode === "draw" || create.isPending || rule.isPending}>
         {create.isPending ? "Saving geofence…" : "Save geofence"}
       </button>
