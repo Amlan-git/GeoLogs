@@ -30,8 +30,8 @@ export function FleetMap({ zones, located, mode, draft, onDraw, onPick, picked, 
   useEffect(() => {
     const instance = L.map(element.current!).setView([37.7749, -122.4194], 12);
     map.current = instance;
-    L.tileLayer("https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://www.carto.com/attribution/">CARTO</a>',
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
     }).addTo(instance);
     zoneLayer.current = L.layerGroup().addTo(instance);
     vehicleLayer.current = L.layerGroup().addTo(instance);
