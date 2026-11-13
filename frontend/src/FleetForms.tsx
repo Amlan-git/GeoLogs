@@ -72,7 +72,7 @@ export function ZoneForm({ ring, mode, onMode, clearRing }: {
         <input type="checkbox" checked={defaultRule} onChange={(event) => setDefaultRule(event.target.checked)} />
         Alert on entry and exit for all vehicles
       </label>}
-      <button className={styles.secondary} type="button" onClick={() => onMode(mode === "draw" ? "browse" : "draw")}>
+      <button className={styles.secondary} type="button" disabled={create.isPending || rule.isPending} onClick={() => onMode(mode === "draw" ? "browse" : "draw")}>
         {mode === "draw" ? "Cancel drawing" : ring ? "Redraw boundary" : "Draw boundary on map"}
       </button>
       {mode === "draw" && <p className={styles.muted}>Click to add vertices, then click the first point to close the polygon.</p>}
@@ -85,7 +85,7 @@ export function ZoneForm({ ring, mode, onMode, clearRing }: {
         <p>Zone saved, but its alert rule could not be created. This zone will not send alerts yet.</p>
         <p>{warning.message}</p>
         <div className={styles.actions}>
-          <button type="button" className={styles.secondary} onClick={() => rule.mutate(warning.id)} disabled={rule.isPending}>Retry</button>
+          <button type="button" className={styles.secondary} onClick={() => rule.mutate(warning.id)} disabled={rule.isPending}>{rule.isPending ? "Retrying…" : "Retry"}</button>
           <button type="button" className={styles.secondary} onClick={() => setWarning(null)}>Dismiss</button>
         </div>
       </div>}
@@ -102,6 +102,7 @@ export function RegisterVehicle() {
   return (
     <form className={styles.form} onSubmit={(event) => {
       event.preventDefault();
+      if (mutation.isPending) return;
       const form = event.currentTarget;
       mutation.mutate(new FormData(form), { onSuccess: () => form.reset() });
     }}>
@@ -142,6 +143,7 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
   return (
     <form className={styles.form} onSubmit={(event) => {
       event.preventDefault();
+      if (mutation.isPending) return;
       const enteredTimestamp = String(new FormData(event.currentTarget).get("timestamp") ?? "");
       const date = enteredTimestamp ? new Date(enteredTimestamp) : new Date();
       if (!Number.isFinite(date.getTime())) {

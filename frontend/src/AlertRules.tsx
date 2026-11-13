@@ -52,6 +52,7 @@ export function AlertRules({ zones, vehicles }: { zones: Geofence[]; vehicles: V
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (create.isPending) return;
     const form = event.currentTarget;
     setSaved(false);
     create.mutate(new FormData(form), { onSuccess: () => {
@@ -80,7 +81,7 @@ export function AlertRules({ zones, vehicles }: { zones: Geofence[]; vehicles: V
       {create.error && <p role="alert" className={styles.error}>{create.error.message}</p>}
       {saved && <p role="status">Alert rule created.</p>}
     </form>
-    {rules.isPending && <p role="status">Loading alert rules…</p>}
+    {rules.isFetching && <p role="status">Loading alert rules…</p>}
     {rules.error && <p role="alert" className={styles.error}>{rules.error.message}</p>}
     {rules.data?.alerts.length === 0 && <p className={styles.muted}>No alert rules yet.</p>}
     <ul className={styles.rows}>
