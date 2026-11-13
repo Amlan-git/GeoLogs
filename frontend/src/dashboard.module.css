@@ -1,6 +1,6 @@
 .header { min-height: 64px; padding: 12px clamp(16px, 4vw, 48px); display: flex; align-items: center; gap: 18px; background: #122038; color: white; }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 750; letter-spacing: -.04em; }
-.brandMark { background: #bdf2e2; color: #0b493d; border-radius: 8px; width: 33px; height: 33px; display: grid; place-items: center; }
+.brandMark { box-sizing: content-box; width: 28px; height: 28px; padding: 3px; background: #fff; border-radius: 8px; }
 .headerLabel { color: #c2cde0; border-left: 1px solid #536176; padding-left: 18px; font-size: 14px; }
 .main { max-width: 1460px; margin: 0 auto; padding: 24px clamp(12px, 4vw, 48px) 48px; }
 .main h1 { margin: 0 0 18px; font-size: clamp(25px, 4vw, 34px); letter-spacing: -.035em; }

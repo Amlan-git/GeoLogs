@@ -55,7 +55,7 @@ function Dashboard() {
   return (
     <>
       <header className={styles.header}>
-        <div className={styles.brand}><span className={styles.brandMark} aria-hidden="true">◈</span>GeoLog</div>
+        <div className={styles.brand}><img className={styles.brandMark} src="/icons/logo.png" alt="GeoLog" />GeoLog</div>
         <span className={styles.headerLabel}>Fleet operations</span>
         <LiveStatus />
       </header>
