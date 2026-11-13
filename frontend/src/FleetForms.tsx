@@ -141,7 +141,8 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
   return (
     <form className={styles.form} onSubmit={(event) => {
       event.preventDefault();
-      const date = timestamp ? new Date(timestamp) : new Date();
+      const enteredTimestamp = String(new FormData(event.currentTarget).get("timestamp") ?? "");
+      const date = enteredTimestamp ? new Date(enteredTimestamp) : new Date();
       if (!Number.isFinite(date.getTime())) {
         setDateError(new Error("Enter a valid timestamp."));
         return;
@@ -162,7 +163,7 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
       <button className={styles.secondary} type="button" onClick={() => onMode(mode === "pick" ? "browse" : "pick")}>
         {mode === "pick" ? "Cancel map selection" : "Pick coordinates on map"}
       </button>
-      <label>Timestamp (local time, optional)<input type="datetime-local" step="1" value={timestamp} onChange={(event) => setTimestamp(event.target.value)} /></label>
+      <label>Timestamp (local time, optional)<input type="datetime-local" name="timestamp" step="1" value={timestamp} onChange={(event) => setTimestamp(event.target.value)} /></label>
 
       <Feedback error={dateError ?? mutation.error} message={mutation.isSuccess
         ? mutation.data.location_updated ? "Location updated." : "This report is older than the vehicle's latest position, so the map was not changed."
