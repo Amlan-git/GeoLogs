@@ -1,7 +1,9 @@
+import { useCallback, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { FleetMap } from "./FleetMap";
-import type { Geofence } from "./api";
+import type { Coordinates, Geofence } from "./api";
+import { GeofenceList, LocationForm, RegisterVehicle, VehicleRow, ZoneForm, type MapMode } from "./FleetForms";
 import { categories } from "./categories";
 import { geofencesQuery, queryDefaults, useFleet } from "./queries";
 import styles from "./dashboard.module.css";
@@ -11,6 +13,29 @@ const client = new QueryClient({ defaultOptions: queryDefaults });
 const noZones: Geofence[] = [];
 
 function Dashboard() {
+  const mapPanel = useRef<HTMLElement>(null);
+  const locationPanel = useRef<HTMLElement>(null);
+  const [mode, setMode] = useState<MapMode>("browse");
+  const [ring, setRing] = useState<Coordinates[] | null>(null);
+  const [point, setPoint] = useState<[string, string]>(["", ""]);
+  const [vehicleID, setVehicleID] = useState("");
+  const changeMode = useCallback((next: MapMode) => {
+    setMode(next);
+    if (next !== "browse") mapPanel.current?.scrollIntoView({ block: "nearest" });
+  }, []);
+  const onDraw = useCallback((coordinates: Coordinates[]) => {
+    setRing(coordinates);
+    setMode("browse");
+  }, []);
+  const onPick = useCallback(([lat, lon]: Coordinates) => {
+    setPoint([lat.toFixed(6), lon.toFixed(6)]);
+    setMode("browse");
+    locationPanel.current?.scrollIntoView({ block: "nearest" });
+  }, []);
+  const select = useCallback((id: string) => {
+    setVehicleID(id);
+    locationPanel.current?.scrollIntoView({ block: "nearest" });
+  }, []);
   const zones = useQuery(geofencesQuery());
   const { fleet, vehicles, statuses } = useFleet();
   const located = vehicles.flatMap((vehicle, index) => {
@@ -26,19 +51,43 @@ function Dashboard() {
       </header>
       <main className={styles.main}>
         <h1>Fleet map</h1>
-        <section className={styles.mapPanel} aria-label="Map and zone categories">
-          <div className={styles.legend}>
-            {Object.values(categories).map(({ label, color }) => (
-              <span key={label}><i style={{ backgroundColor: color }} />{label}</span>
-            ))}
-          </div>
-          <FleetMap zones={zones.data?.geofences ?? noZones} located={located} />
-        </section>
+        <div className={styles.workspace}>
+          <section ref={mapPanel} className={styles.mapPanel} aria-label="Map and zone categories">
+            <div className={styles.legend}>
+              {Object.values(categories).map(({ label, color }) => (
+                <span key={label}><i style={{ backgroundColor: color }} />{label}</span>
+              ))}
+            </div>
+            {mode !== "browse" && <div className={styles.mapPrompt} role="status">
+              {mode === "draw" ? "Draw a boundary. Click the first point to finish." : "Click the map to pick coordinates."}
+              <button type="button" className={styles.secondary} onClick={() => setMode("browse")}>Cancel</button>
+            </div>}
+            <FleetMap zones={zones.data?.geofences ?? noZones} located={located} mode={mode} draft={ring} onDraw={onDraw} onPick={onPick} />
+          </section>
+          <section className={styles.panel}>
+            <ZoneForm ring={ring} mode={mode} onMode={changeMode} clearRing={() => setRing(null)} />
+          </section>
+        </div>
         <div className={styles.feedback} aria-live="polite">
           {(zones.isFetching || fleet.isFetching || statuses.some((status) => status.isFetching)) && <p>Loading fleet data…</p>}
           {zones.error && <p role="alert">Geofences: {zones.error.message}</p>}
           {fleet.error && <p role="alert">Vehicles: {fleet.error.message}</p>}
-          {statuses.map((status, index) => status.error && <p key={vehicles[index].id} role="alert">{vehicles[index].vehicle_number}: {status.error.message}</p>)}
+
+        </div>
+        <div className={styles.workspace}>
+          <GeofenceList />
+          <section ref={locationPanel} className={styles.panel}>
+            <LocationForm vehicles={vehicles} vehicleID={vehicleID} setVehicleID={setVehicleID} point={point} setPoint={setPoint} mode={mode} onMode={changeMode} />
+          </section>
+          <section className={styles.panel}>
+            <h2>Vehicles</h2>
+            {fleet.data?.vehicles.length === 0 && <p className={styles.muted}>No vehicles registered.</p>}
+            <ul className={styles.rows}>
+              {vehicles.map((vehicle, index) => <VehicleRow key={vehicle.id} vehicle={vehicle} status={statuses[index].data}
+                fetching={statuses[index].isFetching} error={statuses[index].error} select={select} />)}
+            </ul>
+          </section>
+          <section className={styles.panel}><RegisterVehicle /></section>
         </div>
       </main>
     </>

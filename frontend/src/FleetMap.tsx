@@ -1,21 +1,28 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "@geoman-io/leaflet-geoman-free";
+import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import marker from "leaflet/dist/images/marker-icon.png";
 import markerRetina from "leaflet/dist/images/marker-icon-2x.png";
 import shadow from "leaflet/dist/images/marker-shadow.png";
-import type { Geofence, Position, Vehicle } from "./api";
+import type { MapMode } from "./FleetForms";
+import type { Coordinates, Geofence, Position, Vehicle } from "./api";
 import { categories } from "./categories";
 import styles from "./dashboard.module.css";
 
 const icon = L.icon({ iconUrl: marker, iconRetinaUrl: markerRetina, shadowUrl: shadow, iconSize: [25, 41], iconAnchor: [12, 41], shadowSize: [41, 41], popupAnchor: [1, -34] });
 export type LocatedVehicle = { vehicle: Vehicle; position: Position };
 
-export function FleetMap({ zones, located }: { zones: Geofence[]; located: LocatedVehicle[] }) {
+export function FleetMap({ zones, located, mode, draft, onDraw, onPick }: {
+  zones: Geofence[]; located: LocatedVehicle[]; mode: MapMode; draft: Coordinates[] | null;
+  onDraw: (ring: Coordinates[]) => void; onPick: (point: Coordinates) => void;
+}) {
   const element = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const zoneLayer = useRef<L.LayerGroup | null>(null);
   const vehicleLayer = useRef<L.LayerGroup | null>(null);
+  const draftLayer = useRef<L.LayerGroup | null>(null);
   const fitted = useRef(false);
   const markers = useRef(new Map<string, L.Marker>());
 
@@ -27,6 +34,7 @@ export function FleetMap({ zones, located }: { zones: Geofence[]; located: Locat
     }).addTo(instance);
     zoneLayer.current = L.layerGroup().addTo(instance);
     vehicleLayer.current = L.layerGroup().addTo(instance);
+    draftLayer.current = L.layerGroup().addTo(instance);
     const resize = new ResizeObserver(() => instance.invalidateSize());
     resize.observe(element.current!);
     return () => {
@@ -79,6 +87,42 @@ export function FleetMap({ zones, located }: { zones: Geofence[]; located: Locat
       fitted.current = true;
     }
   }, [located]);
+
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    if (mode === "draw") {
+      const created = (event: L.LeafletEvent) => {
+        const layer = (event as L.LeafletEvent & { layer: L.Polygon }).layer;
+        const vertices = (layer.getLatLngs() as L.LatLng[][])[0];
+        const ring: Coordinates[] = vertices.map(({ lat, lng }) => [lat, lng]);
+        layer.remove();
+        const first = ring[0];
+        const last = ring[ring.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) ring.push(first);
+        onDraw(ring);
+      };
+      instance.on("pm:create", created);
+      instance.pm.enableDraw("Polygon", { allowSelfIntersection: false, snappable: false });
+      return () => {
+        instance.off("pm:create", created);
+        instance.pm.disableDraw("Polygon");
+      };
+    }
+    if (mode === "pick") {
+      const pick = (event: L.LeafletMouseEvent) => onPick([event.latlng.lat, event.latlng.wrap().lng]);
+      instance.on("click", pick);
+      return () => { instance.off("click", pick); };
+    }
+  }, [mode, onDraw, onPick]);
+
+  useEffect(() => {
+    const layer = draftLayer.current;
+    layer?.clearLayers();
+    if (layer && draft && mode !== "draw") {
+      L.polygon(draft, { color: "#526b82", dashArray: "6 4" }).addTo(layer);
+    }
+  }, [draft, mode]);
 
   return <div ref={element} className={styles.map} aria-label="Fleet map" />;
 }

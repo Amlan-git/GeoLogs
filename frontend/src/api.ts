@@ -49,3 +49,11 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
   if (!body) throw new ApiError("The API returned an unreadable response.", response.status);
   return body as T;
 }
+
+export function write<T>(path: string, body: unknown, method = "POST") {
+  return request<T>(path, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
