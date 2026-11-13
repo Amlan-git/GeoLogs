@@ -8,7 +8,7 @@ GeoLog is a fleet geofencing dashboard. Draw zones, register vehicles, submit GP
 
 The free Render instance can take about a minute to wake.
 
-Video walkthrough: <LINK>
+Video walkthrough: <https://youtu.be/uhcq2V6PWMI>
 
 ## Run locally
 
