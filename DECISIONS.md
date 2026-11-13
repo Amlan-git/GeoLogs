@@ -11,12 +11,12 @@ GeoLog is a fleet operations dashboard for drawing zones, registering vehicles, 
 - A registered vehicle without a GPS report returns `200` with `vehicle_id`, `vehicle_number`, `current_location: null`, and `current_geofences: []`. An unknown vehicle returns `404` on either location route, and a location post saves nothing in that case. Keep `GET /vehicles` as specified.
 
 - Geofences and vehicles have fixed status `active` wherever the documented response includes a status field.
-- Return timestamps in UTC as RFC 3339 with a `Z` suffix. Use the GPS sample timestamp for the crossing and its WebSocket alert.
+- Return timestamps in UTC as RFC 3339 with whole seconds and a `Z` suffix. Use the GPS sample timestamp for the crossing and its WebSocket alert.
 
 ## Schema and spatial behavior
 
 - Tables are `geofences`, `vehicles`, `vehicle_locations`, `vehicle_geofence_memberships`, `violations`, `alert_rules`, and `alerts`. Use foreign keys for entity relationships, `TIMESTAMPTZ` for timestamps, and a unique vehicle–geofence pair in memberships.
-- Trim required text fields for validation. Require a nonempty phone and vehicle type. Store and return the vehicle number as entered. Enforce uniqueness in PostgreSQL on the trimmed, case-insensitive vehicle number.
+- Trim surrounding whitespace from geofence names, vehicle numbers, driver names, vehicle types, and phone numbers before storage and return the trimmed values. Preserve vehicle-number casing. Require a nonempty phone and vehicle type. Enforce uniqueness in PostgreSQL on the trimmed, case-insensitive vehicle number.
 - Validate geofences in order. Check required fields and one of `delivery_zone`, `restricted_zone`, `toll_zone`, or `customer_area`. Check that each coordinate contains exactly two numbers. Check latitude and longitude ranges, at least four points with the first equal to the last, and at least three distinct vertices. Then check `ST_IsValid` in PostGIS.
 - Reject invalid geometry with `400` and a plain-language explanation appropriate to the failure. Log the raw PostGIS reason on the server. Accept either winding order and preserve the shape the dispatcher drew.
 - Store the submitted `[lat, lon]` ring in JSONB and return it from `GET /geofences` in the same pair order and ring sequence. Store a separate GiST-indexed `geometry(Polygon, 4326)` for containment. Use `ST_Covers` so edges and vertices count as inside, including the brief's sample vertex. Construct the query point with `ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)`.

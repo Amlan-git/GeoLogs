@@ -63,7 +63,7 @@ func TestCatalogWithPostGIS(t *testing.T) {
 	}
 	const ring = "[[37.7749,-122.4194],[37.7849,-122.4194],[37.7849,-122.4094],[37.7749,-122.4094],[37.7749,-122.4194]]"
 	zone := func(coordinates string) string {
-		return `{"name":"Downtown Delivery Zone","category":"delivery_zone","coordinates":` + coordinates + "}"
+		return `{"name":"  Downtown Delivery Zone  ","category":"delivery_zone","coordinates":` + coordinates + "}"
 	}
 	for _, invalid := range []string{
 		"[[0,0],[1,1],[0,1],[1,0],[0,0]]",
@@ -79,20 +79,19 @@ func TestCatalogWithPostGIS(t *testing.T) {
 	}
 	request(http.MethodPost, "/geofences", zone(ring)+" {}", 400)
 	created := request(http.MethodPost, "/geofences", zone(ring), 201)
-	if !strings.HasPrefix(string(created["id"]), `"geo_`) || string(created["status"]) != `"active"` || len(created) != 4 {
+	if !strings.HasPrefix(string(created["id"]), `"geo_`) || string(created["status"]) != `"active"` || string(created["name"]) != `"Downtown Delivery Zone"` || len(created) != 4 {
 		t.Fatalf("invalid geofence response: %v", created)
 	}
 	list := request(http.MethodGet, "/geofences?category=delivery_zone", "", 200)
 	var zones []struct {
+		Name        string
 		Coordinates json.RawMessage
 		CreatedAt   string `json:"created_at"`
 	}
-	if err := json.Unmarshal(list["geofences"], &zones); err != nil || len(zones) != 1 || string(zones[0].Coordinates) != ring {
+	if err := json.Unmarshal(list["geofences"], &zones); err != nil || len(zones) != 1 || zones[0].Name != "Downtown Delivery Zone" || string(zones[0].Coordinates) != ring {
 		t.Fatalf("geofence ring did not round-trip: %s (%v)", list["geofences"], err)
 	}
-	if _, err := time.Parse(time.RFC3339Nano, zones[0].CreatedAt); err != nil || !strings.HasSuffix(zones[0].CreatedAt, "Z") {
-		t.Fatalf("invalid UTC timestamp: %s", zones[0].CreatedAt)
-	}
+	assertWholeSecondUTC(t, zones[0].CreatedAt)
 	if got := request(http.MethodGet, "/geofences?category=toll_zone", "", 200)["geofences"]; string(got) != "[]" {
 		t.Fatalf("unexpected filtered list: %s", got)
 	}
@@ -112,12 +111,12 @@ func TestCatalogWithPostGIS(t *testing.T) {
 		}
 	}
 	vehicle := func(number string) string {
-		return `{"vehicle_number":"` + number + `","driver_name":"John Doe","vehicle_type":"truck","phone":"+1234567890"}`
+		return `{"vehicle_number":"` + number + `","driver_name":"  John Doe  ","vehicle_type":"  truck  ","phone":"  +1234567890  "}`
 	}
 	request(http.MethodPost, "/vehicles", `{"vehicle_number":"KA-01"}`, 400)
 	request(http.MethodPost, "/vehicles", "{", 400)
 	created = request(http.MethodPost, "/vehicles", vehicle("  KA-01  "), 201)
-	if !strings.HasPrefix(string(created["id"]), `"veh_`) || string(created["vehicle_number"]) != `"  KA-01  "` || len(created) != 4 {
+	if !strings.HasPrefix(string(created["id"]), `"veh_`) || string(created["vehicle_number"]) != `"KA-01"` || len(created) != 4 {
 		t.Fatalf("invalid vehicle response: %v", created)
 	}
 	request(http.MethodPost, "/vehicles", vehicle("ka-01"), 409)
@@ -126,7 +125,27 @@ func TestCatalogWithPostGIS(t *testing.T) {
 	list = request(http.MethodGet, "/vehicles", "", 200)
 	var vehicles []map[string]json.RawMessage
 	if err := json.Unmarshal(list["vehicles"], &vehicles); err != nil || len(vehicles) != 1 ||
-		string(vehicles[0]["vehicle_number"]) != `"  KA-01  "` || string(vehicles[0]["status"]) != `"active"` {
+		string(vehicles[0]["vehicle_number"]) != `"KA-01"` || string(vehicles[0]["status"]) != `"active"` {
 		t.Fatalf("unexpected vehicle list: %s (%v)", list["vehicles"], err)
+	}
+	for field, want := range map[string]string{
+		"driver_name": `"John Doe"`, "vehicle_type": `"truck"`, "phone": `"+1234567890"`,
+	} {
+		if got := string(vehicles[0][field]); got != want {
+			t.Errorf("%s = %s; want %s", field, got, want)
+		}
+	}
+	var createdAt string
+	if err := json.Unmarshal(vehicles[0]["created_at"], &createdAt); err != nil {
+		t.Fatal(err)
+	}
+	assertWholeSecondUTC(t, createdAt)
+}
+
+func assertWholeSecondUTC(t *testing.T, value string) {
+	t.Helper()
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err != nil || parsed.UTC().Format(time.RFC3339) != value {
+		t.Fatalf("expected UTC timestamp with whole seconds, got %q", value)
 	}
 }

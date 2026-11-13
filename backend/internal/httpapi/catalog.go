@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"geolog/internal/domain"
@@ -25,6 +26,7 @@ func registerCatalog(router *http.ServeMux, catalog *service.Catalog) {
 		if !decodeJSON(w, r, started, &body) {
 			return
 		}
+		body.Name = strings.TrimSpace(body.Name)
 		id, err := catalog.CreateGeofence(r.Context(), domain.Geofence{
 			Name: body.Name, Description: body.Description, Category: body.Category, Coordinates: body.Coordinates,
 		})
@@ -49,7 +51,7 @@ func registerCatalog(router *http.ServeMux, catalog *service.Catalog) {
 			items = append(items, map[string]any{
 				"id": ids.FormatGeofence(zone.ID), "name": zone.Name, "description": zone.Description,
 				"coordinates": zone.Coordinates, "category": zone.Category,
-				"created_at": zone.CreatedAt.UTC().Format(time.RFC3339Nano),
+				"created_at": zone.CreatedAt.UTC().Format(time.RFC3339),
 			})
 		}
 		writeJSON(w, started, http.StatusOK, map[string]any{"geofences": items})
@@ -66,6 +68,10 @@ func registerCatalog(router *http.ServeMux, catalog *service.Catalog) {
 		if !decodeJSON(w, r, started, &body) {
 			return
 		}
+		body.Number = strings.TrimSpace(body.Number)
+		body.Driver = strings.TrimSpace(body.Driver)
+		body.Type = strings.TrimSpace(body.Type)
+		body.Phone = strings.TrimSpace(body.Phone)
 		id, err := catalog.CreateVehicle(r.Context(), domain.Vehicle{
 			Number: body.Number, Driver: body.Driver, Type: body.Type, Phone: body.Phone,
 		})
@@ -90,7 +96,7 @@ func registerCatalog(router *http.ServeMux, catalog *service.Catalog) {
 			items = append(items, map[string]any{
 				"id": ids.FormatVehicle(vehicle.ID), "vehicle_number": vehicle.Number, "driver_name": vehicle.Driver,
 				"vehicle_type": vehicle.Type, "phone": vehicle.Phone, "status": "active",
-				"created_at": vehicle.CreatedAt.UTC().Format(time.RFC3339Nano),
+				"created_at": vehicle.CreatedAt.UTC().Format(time.RFC3339),
 			})
 		}
 		writeJSON(w, started, http.StatusOK, map[string]any{"vehicles": items})
