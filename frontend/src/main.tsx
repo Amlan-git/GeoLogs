@@ -74,14 +74,6 @@ function Dashboard() {
             </div>}
             <FleetMap zones={zones.data?.geofences ?? noZones} located={located} mode={mode} draft={ring} onDraw={onDraw} onPick={onPick} picked={picked} focus={mapFocus} />
           </section>
-          <div className={styles.sidebar}>
-          <section ref={locationPanel} className={styles.panel}>
-            <LocationForm vehicles={vehicles} vehicleID={vehicleID} setVehicleID={setVehicleID} point={point} setPoint={setPoint} mode={mode} onMode={changeMode} onSubmitted={() => changeMode("browse")} />
-          </section>
-          <section className={styles.panel}>
-            <ZoneForm ring={ring} mode={mode} onMode={changeMode} setRing={setRing} />
-          </section>
-          </div>
         </div>
         <div className={styles.feedback} aria-live="polite">
           {(zones.isFetching || fleet.isFetching || statuses.some((status) => status.isFetching)) && <p>Loading fleet data…</p>}
@@ -92,8 +84,13 @@ function Dashboard() {
         <div className={styles.workspace}>
           <GeofenceList />
           <section className={styles.panel}>
+            <ZoneForm ring={ring} mode={mode} onMode={changeMode} setRing={setRing} />
+          </section>
+        </div>
+        <div className={styles.workspace}>
+          <section className={styles.panel}>
             <h2>Vehicles</h2>
-            {fleet.data?.vehicles.length === 0 && <p className={styles.muted}>No vehicles registered.</p>}
+            {fleet.data?.vehicles.length === 0 && <p className={styles.muted}>No vehicles registered yet. Register a vehicle to track its location.</p>}
             <ul className={styles.rows}>
               {vehicles.map((vehicle, index) => <VehicleRow key={vehicle.id} vehicle={vehicle} status={statuses[index].data}
                 fetching={statuses[index].isFetching} error={statuses[index].error} select={select} showOnMap={showOnMap} />)}
@@ -101,6 +98,9 @@ function Dashboard() {
           </section>
           <section className={styles.panel}><RegisterVehicle /></section>
         </div>
+          <section ref={locationPanel} className={`${styles.panel} ${styles.locationSection}`}>
+            <LocationForm vehicles={vehicles} vehicleID={vehicleID} setVehicleID={setVehicleID} point={point} setPoint={setPoint} mode={mode} onMode={changeMode} onSubmitted={() => changeMode("browse")} />
+          </section>
         <div className={styles.workspace}>
           <AlertRules zones={zones.data?.geofences ?? noZones} vehicles={vehicles} />
           <LiveFeed />

@@ -83,7 +83,7 @@ export function AlertRules({ zones, vehicles }: { zones: Geofence[]; vehicles: V
     </form>
     {rules.isFetching && <p role="status">Loading alert rules…</p>}
     {rules.error && <p role="alert" className={styles.error}>{rules.error.message}</p>}
-    {rules.data?.alerts.length === 0 && <p className={styles.muted}>No alert rules yet.</p>}
+    {rules.data?.alerts.length === 0 && <p className={styles.muted}>No alert rules yet. Create one to receive crossing alerts.</p>}
     <ul className={styles.rows}>
       {rules.data?.alerts.map((rule) => <RuleRow key={rule.alert_id} rule={rule} />)}
     </ul>

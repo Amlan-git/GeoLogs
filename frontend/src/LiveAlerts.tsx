@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { alertsSocketURL, type LiveAlert } from "./api";
 import { categories } from "./categories";
 import { keys } from "./queries";
+import { formatUTC } from "./timestamps";
 import styles from "./dashboard.module.css";
 
 type ConnectionStatus = "Live" | "Reconnecting" | "Offline";
@@ -146,7 +147,7 @@ function AlertDetails({ alert }: { alert: LiveAlert }) {
     <strong>{alert.event_type === "entry" ? "Entry" : "Exit"} · {alert.geofence.geofence_name}</strong>
     <p>{alert.vehicle.vehicle_number} · {alert.vehicle.driver_name}</p>
     <p>{categories[alert.geofence.category].label}</p>
-    <p><time dateTime={alert.timestamp}>{new Date(alert.timestamp).toLocaleString()}</time></p>
+    <p><time dateTime={alert.timestamp}>{formatUTC(alert.timestamp)}</time></p>
     <p>Lat {alert.location.latitude}, lon {alert.location.longitude}</p>
   </>;
 }
@@ -172,7 +173,7 @@ export function LiveFeed() {
   const { alerts } = useContext(AlertsContext);
   return <section className={styles.panel}>
     <h2>Live alerts</h2>
-    {alerts.length === 0 && <p className={styles.muted}>No live alerts received yet.</p>}
+    {alerts.length === 0 && <p className={styles.muted}>No live alerts yet. Move a vehicle across a geofence with an active rule.</p>}
     <ul className={`${styles.rows} ${styles.alertFeed}`}>
       {alerts.map((alert) => <li key={alert.event_id}>
         <div className={alert.geofence.category === "restricted_zone" ? styles.restrictedAlert : undefined}>

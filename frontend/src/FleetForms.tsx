@@ -222,7 +222,7 @@ export function GeofenceList() {
         {Object.entries(categories).map(([value, { label }]) => <option key={value} value={value}>{label}</option>)}
       </select></label>
       <Feedback error={query.error} message={query.isFetching ? "Loading geofences…" : undefined} />
-      {query.data?.geofences.length === 0 && <p className={styles.muted}>No geofences in this view.</p>}
+      {query.data?.geofences.length === 0 && <p className={styles.muted}>No geofences in this view. Create a zone or change the category filter.</p>}
       <ul className={styles.rows}>
         {query.data?.geofences.map((zone) => <li key={zone.id}>
           <strong>{zone.name}</strong>

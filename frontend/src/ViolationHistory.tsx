@@ -2,6 +2,7 @@ import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { Geofence, HistoryFilters, Vehicle } from "./api";
 import { historyPageSize, historyQuery } from "./queries";
+import { formatUTC } from "./timestamps";
 import styles from "./dashboard.module.css";
 
 function HistoryResults({ filters }: { filters: HistoryFilters }) {
@@ -18,13 +19,13 @@ function HistoryResults({ filters }: { filters: HistoryFilters }) {
       <p>{history.error.message}</p>
       <button type="button" className={styles.secondary} disabled={history.isFetching} onClick={() => void history.refetch()}>Retry</button>
     </div>}
-    {history.data && count === 0 && <p className={styles.muted}>No crossings match these filters.</p>}
+    {history.data && count === 0 && <p className={styles.muted}>No crossings match these filters. Try a different vehicle, geofence, or date range.</p>}
     {history.data && history.data.violations.length > 0 && <div className={styles.historyTable} tabIndex={0} role="region" aria-label="Scrollable crossing history">
       <table aria-label="Geofence crossings">
         <thead><tr><th scope="col">Time (UTC)</th><th scope="col">Vehicle</th><th scope="col">Geofence</th>
           <th scope="col">Event</th><th scope="col">Coordinates</th></tr></thead>
         <tbody>{history.data.violations.map((event) => <tr key={event.id}>
-          <td><time dateTime={event.timestamp}>{event.timestamp.replace("T", " ").replace(/Z$/, "")}</time></td>
+          <td><time dateTime={event.timestamp}>{formatUTC(event.timestamp)}</time></td>
           <td>{event.vehicle_number}</td>
           <td>{event.geofence_name}</td>
           <td>{event.event_type === "entry" ? "Entry" : "Exit"}</td>
