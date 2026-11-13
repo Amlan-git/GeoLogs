@@ -14,8 +14,9 @@ import styles from "./dashboard.module.css";
 const icon = L.icon({ iconUrl: marker, iconRetinaUrl: markerRetina, shadowUrl: shadow, iconSize: [25, 41], iconAnchor: [12, 41], shadowSize: [41, 41], popupAnchor: [1, -34] });
 export type LocatedVehicle = { vehicle: Vehicle; position: Position };
 
-export function FleetMap({ zones, located, mode, draft, onDraw, onPick }: {
+export function FleetMap({ zones, located, mode, draft, onDraw, onPick, picked, focus }: {
   zones: Geofence[]; located: LocatedVehicle[]; mode: MapMode; draft: Coordinates[] | null;
+  picked: Coordinates | null; focus: { id: string } | null;
   onDraw: (ring: Coordinates[]) => void; onPick: (point: Coordinates) => void;
 }) {
   const element = useRef<HTMLDivElement>(null);
@@ -73,7 +74,7 @@ export function FleetMap({ zones, located, mode, draft, onDraw, onPick }: {
       } else {
         const label = document.createElement("span");
         label.textContent = vehicle.vehicle_number;
-        markers.current.set(vehicle.id, L.marker(point, { icon, title: vehicle.vehicle_number }).bindTooltip(label).addTo(layer));
+        markers.current.set(vehicle.id, L.marker(point, { icon, title: vehicle.vehicle_number, bubblingMouseEvents: true }).bindTooltip(label).addTo(layer));
       }
     }
     for (const [id, item] of markers.current) {
@@ -124,5 +125,23 @@ export function FleetMap({ zones, located, mode, draft, onDraw, onPick }: {
     }
   }, [draft, mode]);
 
-  return <div ref={element} className={styles.map} aria-label="Fleet map" />;
+  useEffect(() => {
+    if (!picked || !map.current) return;
+    const pin = L.marker(picked, {
+      icon: L.divIcon({ className: styles.pickedPin, iconSize: [24, 24], iconAnchor: [12, 24] }),
+      interactive: false, keyboard: false, zIndexOffset: 1000,
+    }).addTo(map.current);
+    return () => { pin.remove(); };
+  }, [picked]);
+
+  useEffect(() => {
+    if (!focus) return;
+    const marker = markers.current.get(focus.id);
+    if (marker) {
+      map.current?.panTo(marker.getLatLng());
+      marker.openTooltip();
+    }
+  }, [focus]);
+
+  return <div ref={element} className={mode === "pick" ? `${styles.map} ${styles.picking}` : styles.map} aria-label="Fleet map" />;
 }

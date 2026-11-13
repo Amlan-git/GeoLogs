@@ -18,9 +18,12 @@ function Dashboard() {
   const [mode, setMode] = useState<MapMode>("browse");
   const [ring, setRing] = useState<Coordinates[] | null>(null);
   const [point, setPoint] = useState<[string, string]>(["", ""]);
+  const [picked, setPicked] = useState<Coordinates | null>(null);
+  const [mapFocus, setMapFocus] = useState<{ id: string } | null>(null);
   const [vehicleID, setVehicleID] = useState("");
   const changeMode = useCallback((next: MapMode) => {
     setMode(next);
+    setPicked(null);
     if (next !== "browse") mapPanel.current?.scrollIntoView({ block: "nearest" });
   }, []);
   const onDraw = useCallback((coordinates: Coordinates[]) => {
@@ -28,9 +31,12 @@ function Dashboard() {
     setMode("browse");
   }, []);
   const onPick = useCallback(([lat, lon]: Coordinates) => {
-    setPoint([lat.toFixed(6), lon.toFixed(6)]);
-    setMode("browse");
-    locationPanel.current?.scrollIntoView({ block: "nearest" });
+    setPoint([String(lat), String(lon)]);
+    setPicked([lat, lon]);
+  }, []);
+  const showOnMap = useCallback((id: string) => {
+    setMapFocus({ id });
+    mapPanel.current?.scrollIntoView({ block: "nearest" });
   }, []);
   const select = useCallback((id: string) => {
     setVehicleID(id);
@@ -60,13 +66,18 @@ function Dashboard() {
             </div>
             {mode !== "browse" && <div className={styles.mapPrompt} role="status">
               {mode === "draw" ? "Draw a boundary. Click the first point to finish." : "Click the map to pick coordinates."}
-              <button type="button" className={styles.secondary} onClick={() => setMode("browse")}>Cancel</button>
+              <button type="button" className={styles.secondary} onClick={() => changeMode("browse")}>Cancel</button>
             </div>}
-            <FleetMap zones={zones.data?.geofences ?? noZones} located={located} mode={mode} draft={ring} onDraw={onDraw} onPick={onPick} />
+            <FleetMap zones={zones.data?.geofences ?? noZones} located={located} mode={mode} draft={ring} onDraw={onDraw} onPick={onPick} picked={picked} focus={mapFocus} />
+          </section>
+          <div className={styles.sidebar}>
+          <section ref={locationPanel} className={styles.panel}>
+            <LocationForm vehicles={vehicles} vehicleID={vehicleID} setVehicleID={setVehicleID} point={point} setPoint={setPoint} mode={mode} onMode={changeMode} onSubmitted={() => changeMode("browse")} />
           </section>
           <section className={styles.panel}>
             <ZoneForm ring={ring} mode={mode} onMode={changeMode} clearRing={() => setRing(null)} />
           </section>
+          </div>
         </div>
         <div className={styles.feedback} aria-live="polite">
           {(zones.isFetching || fleet.isFetching || statuses.some((status) => status.isFetching)) && <p>Loading fleet data…</p>}
@@ -76,15 +87,12 @@ function Dashboard() {
         </div>
         <div className={styles.workspace}>
           <GeofenceList />
-          <section ref={locationPanel} className={styles.panel}>
-            <LocationForm vehicles={vehicles} vehicleID={vehicleID} setVehicleID={setVehicleID} point={point} setPoint={setPoint} mode={mode} onMode={changeMode} />
-          </section>
           <section className={styles.panel}>
             <h2>Vehicles</h2>
             {fleet.data?.vehicles.length === 0 && <p className={styles.muted}>No vehicles registered.</p>}
             <ul className={styles.rows}>
               {vehicles.map((vehicle, index) => <VehicleRow key={vehicle.id} vehicle={vehicle} status={statuses[index].data}
-                fetching={statuses[index].isFetching} error={statuses[index].error} select={select} />)}
+                fetching={statuses[index].isFetching} error={statuses[index].error} select={select} showOnMap={showOnMap} />)}
             </ul>
           </section>
           <section className={styles.panel}><RegisterVehicle /></section>

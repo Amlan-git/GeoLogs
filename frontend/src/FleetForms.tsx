@@ -116,7 +116,7 @@ export function RegisterVehicle() {
   );
 }
 
-export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoint, mode, onMode }: {
+export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoint, mode, onMode, onSubmitted }: {
   vehicles: Vehicle[];
   vehicleID: string;
   setVehicleID: (id: string) => void;
@@ -124,6 +124,7 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
   setPoint: (point: [string, string]) => void;
   mode: MapMode;
   onMode: (mode: MapMode) => void;
+  onSubmitted: () => void;
 }) {
   const client = useQueryClient();
   const [timestamp, setTimestamp] = useState("");
@@ -131,7 +132,11 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
   const mutation = useMutation({
     mutationFn: (sample: { vehicle_id: string; latitude: number; longitude: number; timestamp: string }) =>
       write<{ location_updated: boolean }>("/vehicles/location", sample),
-    onSuccess: (_, sample) => { void client.invalidateQueries({ queryKey: keys.vehicle(sample.vehicle_id) }); },
+    onSuccess: (_, sample) => {
+      setTimestamp("");
+      onSubmitted();
+      void client.invalidateQueries({ queryKey: keys.vehicle(sample.vehicle_id) });
+    },
   });
   return (
     <form className={styles.form} onSubmit={(event) => {
@@ -153,13 +158,14 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
         <label>Latitude<input required type="number" step="any" min={-90} max={90} value={point[0]} onChange={(event) => setPoint([event.target.value, point[1]])} /></label>
         <label>Longitude<input required type="number" step="any" min={-180} max={180} value={point[1]} onChange={(event) => setPoint([point[0], event.target.value])} /></label>
       </div>
+      <button className={styles.primary} disabled={mutation.isPending}>{mutation.isPending ? "Updating…" : "Update location"}</button>
       <button className={styles.secondary} type="button" onClick={() => onMode(mode === "pick" ? "browse" : "pick")}>
         {mode === "pick" ? "Cancel map selection" : "Pick coordinates on map"}
       </button>
       <label>Timestamp (local time, optional)<input type="datetime-local" step="1" value={timestamp} onChange={(event) => setTimestamp(event.target.value)} /></label>
-      <button className={styles.primary} disabled={mutation.isPending}>{mutation.isPending ? "Updating…" : "Update location"}</button>
+
       <Feedback error={dateError ?? mutation.error} message={mutation.isSuccess
-        ? mutation.data.location_updated ? "Location updated." : "Sample saved. The vehicle has a newer location."
+        ? mutation.data.location_updated ? "Location updated." : "This report is older than the vehicle's latest position, so the map was not changed."
         : undefined} />
     </form>
   );
@@ -188,12 +194,15 @@ export function GeofenceList() {
   );
 }
 
-export const VehicleRow = memo(function VehicleRow({ vehicle, status, fetching, error, select }: {
-  vehicle: Vehicle; status?: VehicleStatus; fetching: boolean; error: Error | null; select: (id: string) => void;
+export const VehicleRow = memo(function VehicleRow({ vehicle, status, fetching, error, select, showOnMap }: {
+  vehicle: Vehicle; status?: VehicleStatus; fetching: boolean; error: Error | null; select: (id: string) => void; showOnMap: (id: string) => void;
 }) {
   return <li>
     <div className={styles.rowTitle}><strong>{vehicle.vehicle_number}</strong>
+      <div className={styles.actions}>
       <button className={styles.secondary} type="button" onClick={() => select(vehicle.id)}>Set location</button>
+        <button className={styles.secondary} type="button" disabled={!status?.current_location} onClick={() => showOnMap(vehicle.id)}>Show on map</button>
+      </div>
     </div>
     <p>{vehicle.driver_name} · {vehicle.vehicle_type}</p>
     <Feedback error={error} message={fetching ? "Loading location…" : undefined} />
