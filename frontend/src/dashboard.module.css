@@ -3,8 +3,11 @@
 .brandMark { box-sizing: content-box; width: 28px; height: 28px; padding: 3px; background: #fff; border-radius: 8px; }
 .headerLabel { color: #c2cde0; border-left: 1px solid #536176; padding-left: 18px; font-size: 14px; }
 .main { max-width: 1460px; margin: 0 auto; padding: 24px clamp(12px, 4vw, 48px) 48px; }
-.main h1 { margin: 0 0 18px; font-size: clamp(25px, 4vw, 34px); letter-spacing: -.035em; }
-.mapPanel, .panel, .toast, .alertCard {
+.stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 0 0 18px; }
+.stats > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 12px; }
+.stats dt { color: var(--slate-600); font-size: 14px; }
+.stats dd { margin: 0; font-weight: 750; font-variant-numeric: tabular-nums; }
+.stats > div, .mapPanel, .panel, .toast, .alertCard {
   background: var(--surface);
   border: 1px solid var(--slate-200);
   border-radius: var(--card-radius);
@@ -29,11 +32,15 @@
 .mapPanel .mapPrompt { grid-area: 1 / 1; }
 .legend span { display: inline-flex; align-items: center; gap: 7px; }
 .legend i { width: 9px; height: 9px; border-radius: 50%; }
-.map { grid-area: 2 / 1; isolation: isolate; height: clamp(330px, 55vh, 620px); background: #e1e9ed; }
+.map { grid-area: 2 / 1; isolation: isolate; height: 340px; background: #e1e9ed; }
 .feedback { font-size: 14px; }
 .feedback [role="alert"] { color: #a22738; }
-.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(290px, 350px); align-items: start; gap: 18px; }
+.workspace, .dashboardRow { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 18px; }
+.dashboardRow { margin-top: 18px; }
 .panel { padding: 18px; min-width: 0; }
+.formTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-bottom: 16px; padding: 4px; border-radius: var(--control-radius); background: var(--slate-50); }
+.formTabs button { padding: 8px 2px; border: 1px solid transparent; border-radius: var(--control-radius); background: transparent; color: var(--slate-600); font-weight: 650; }
+.formTabs button[aria-pressed="true"] { border-color: var(--slate-200); background: var(--surface); color: var(--slate-900); }
 .panel h2, .form h3 { margin: 0 0 4px; letter-spacing: -.025em; }
 .form { display: grid; gap: 11px; }
 .form label, .filter { display: grid; gap: 5px; font-size: 14px; font-weight: 620; }
@@ -73,9 +80,14 @@ button[aria-busy="true"] { cursor: progress; }
 .muted { color: var(--slate-600); font-size: 14px; }
 .error { color: #a22738; }
 .warning { background: #fff5db; color: #593a08; padding: 10px; border-radius: 8px; }
-@media (max-width: 760px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
-.locationSection { margin: 18px 0; }
-.workspace + .workspace { margin-top: 18px; }
+@media (min-width: 1024px) {
+  .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .workspace { --map-height: clamp(560px, calc(100dvh - 84px), 720px); grid-template-columns: minmax(0, 65fr) minmax(0, 35fr); }
+  .workspace > .mapPanel { position: sticky; top: 12px; }
+  .map { height: var(--map-height); }
+  .formCard { max-height: var(--map-height); overflow-y: auto; }
+  .dashboardRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .picking, .picking :global(.leaflet-interactive) { cursor: crosshair; }
 .pickedPin { pointer-events: none; }
 .pickedPin::before {
@@ -88,7 +100,10 @@ button[aria-busy="true"] { cursor: progress; }
   box-shadow: 0 1px 4px #182239aa;
   transform: rotate(-45deg);
 }
-.connection { margin-left: auto; color: #e5f1ff; font-size: 14px; }
+.connection { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border: 1px solid #536176; border-radius: 999px; color: #e5f1ff; font-size: 14px; }
+.connection::before { content: ""; width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #94a3b8; }
+.connection[data-status="Live"]::before { background: #4ade80; }
+.connection[data-status="Reconnecting"]::before { background: #fbbf24; }
 .ruleSwitch { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; }
 .ruleSwitch input {
   appearance: none;
@@ -138,7 +153,6 @@ button[aria-busy="true"] { cursor: progress; }
   .header { gap: 8px 14px; flex-wrap: wrap; }
   .headerLabel { display: none; }
   .connection { max-width: 100%; overflow-wrap: anywhere; }
-  .map { height: 340px; }
   .panel { padding: 14px; }
   .historyFilters { grid-template-columns: minmax(0, 1fr); }
   .toasts { max-height: min(48dvh, 340px); overflow-y: auto; overscroll-behavior: contain; }

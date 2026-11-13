@@ -165,7 +165,12 @@ function Toast({ alert, dismiss }: { alert: LiveAlert; dismiss: (id: string) => 
 
 export function LiveStatus() {
   const { status } = useContext(AlertsContext);
-  return <span className={styles.connection} role="status" aria-label={`Alert connection: ${status}`}>Alerts · {status}</span>;
+  return <span className={styles.connection} data-status={status} role="status" aria-label={`Alert connection: ${status}`}>{status}</span>;
+}
+
+export function AlertSessionCount() {
+  const { alerts } = useContext(AlertsContext);
+  return alerts.length === 100 ? "100+" : alerts.length;
 }
 
 export function LiveFeed() {
