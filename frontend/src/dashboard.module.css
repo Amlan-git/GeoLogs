@@ -55,10 +55,20 @@
 .toast p { margin: 5px 0; }
 .toast.restrictedAlert { background: #fff0f1; border-color: #b72538; border-left-width: 4px; }
 .history { margin-top: 18px; }
-.historyFilters { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 12px 0; }
-.historyTable { overflow-x: auto; }
-.historyTable table { border-collapse: collapse; width: 100%; text-align: left; font-size: 14px; }
+.historyFilters { grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); margin: 12px 0; }
+.historyTable { max-width: 100%; min-width: 0; overflow-x: auto; }
+.historyTable table { border-collapse: collapse; width: 100%; min-width: 580px; text-align: left; font-size: 14px; }
 .historyTable th, .historyTable td { padding: 10px; border-bottom: 1px solid #e0e6ef; }
 .historyTable th { background: #f2f6fc; }
 .historyTable td:first-child { white-space: nowrap; }
 .historyPager { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+@media (max-width: 480px) {
+  .header { gap: 8px 14px; flex-wrap: wrap; }
+  .headerLabel { display: none; }
+  .connection { max-width: 100%; overflow-wrap: anywhere; }
+  .map { height: 340px; }
+  .panel { padding: 14px; }
+  .historyFilters { grid-template-columns: minmax(0, 1fr); }
+  .toasts { max-height: min(48dvh, 340px); overflow-y: auto; overscroll-behavior: contain; }
+}

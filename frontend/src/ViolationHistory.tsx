@@ -19,7 +19,7 @@ function HistoryResults({ filters }: { filters: HistoryFilters }) {
       <button type="button" className={styles.secondary} disabled={history.isFetching} onClick={() => void history.refetch()}>Retry</button>
     </div>}
     {history.data && count === 0 && <p className={styles.muted}>No crossings match these filters.</p>}
-    {history.data && history.data.violations.length > 0 && <div className={styles.historyTable}>
+    {history.data && history.data.violations.length > 0 && <div className={styles.historyTable} tabIndex={0} role="region" aria-label="Scrollable crossing history">
       <table aria-label="Geofence crossings">
         <thead><tr><th scope="col">Time (UTC)</th><th scope="col">Vehicle</th><th scope="col">Geofence</th>
           <th scope="col">Event</th><th scope="col">Coordinates</th></tr></thead>
