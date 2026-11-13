@@ -50,7 +50,7 @@ go vet ./...
 go build ./cmd/server
 ```
 
-The HTTP integration tests skip when that test URL is absent. Use a separate fresh database for the HTTP smoke script. Start the Go server with `DATABASE_URL` set, then run `bash scripts/stage2-smoke.sh http://localhost:8080` from the root. Despite the filename, the script covers rule setup and the complete outside → inside → inside → outside flow.
+The HTTP integration tests skip when that test URL is absent. Use a separate fresh database for the HTTP smoke script. Start the Go server with `DATABASE_URL` set, then run `bash scripts/smoke.sh http://localhost:8080` from the root. The script covers rule setup and the complete outside → inside → inside → outside flow.
 
 ## Next work
 
