@@ -76,7 +76,6 @@ button[aria-busy="true"] { cursor: progress; }
 @media (max-width: 760px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
 .locationSection { margin: 18px 0; }
 .workspace + .workspace { margin-top: 18px; }
-.map :global(.leaflet-tile-pane) { filter: grayscale(0.7) contrast(0.95) brightness(1.04); }
 .picking, .picking :global(.leaflet-interactive) { cursor: crosshair; }
 .pickedPin { pointer-events: none; }
 .pickedPin::before {
