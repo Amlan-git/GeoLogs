@@ -157,10 +157,9 @@ function Toast({ alert, dismiss }: { alert: LiveAlert; dismiss: (id: string) => 
     const timer = window.setTimeout(() => dismiss(alert.event_id), 8000);
     return () => window.clearTimeout(timer);
   }, [alert.event_id, dismiss]);
-  const restricted = alert.geofence.category === "restricted_zone";
-  return <div className={restricted ? `${styles.toast} ${styles.restrictedAlert}` : styles.toast}>
+  return <div className={styles.toast} style={{ borderLeftColor: categories[alert.geofence.category].color }}>
     <AlertDetails alert={alert} />
-    <button type="button" className={styles.secondary} onClick={() => dismiss(alert.event_id)}>Dismiss</button>
+    <button type="button" className={styles.quiet} onClick={() => dismiss(alert.event_id)}>Dismiss</button>
   </div>;
 }
 
@@ -176,7 +175,7 @@ export function LiveFeed() {
     {alerts.length === 0 && <p className={styles.muted}>No live alerts yet. Move a vehicle across a geofence with an active rule.</p>}
     <ul className={`${styles.rows} ${styles.alertFeed}`}>
       {alerts.map((alert) => <li key={alert.event_id}>
-        <div className={alert.geofence.category === "restricted_zone" ? styles.restrictedAlert : undefined}>
+        <div className={styles.alertCard} style={{ borderLeftColor: categories[alert.geofence.category].color }}>
           <AlertDetails alert={alert} />
         </div>
       </li>)}

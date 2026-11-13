@@ -113,7 +113,7 @@ export function ZoneForm({ ring, mode, onMode, setRing }: {
       </label>}
       {coordinateError && <p className={styles.error} role="alert">{coordinateError.message}</p>}
       {ring && mode !== "draw" && <p className={styles.muted}>{ring.length - 1} vertices in preview</p>}
-      <button className={styles.primary} disabled={!ring || mode === "draw" || create.isPending || rule.isPending}>
+      <button className={styles.primary} aria-busy={create.isPending || rule.isPending} disabled={!ring || mode === "draw" || create.isPending || rule.isPending}>
         {create.isPending ? "Saving geofence…" : "Save geofence"}
       </button>
       <Feedback error={create.error} message={rule.isPending ? "Creating alert rule…" : create.isSuccess ? "Geofence saved." : undefined} />
@@ -121,8 +121,8 @@ export function ZoneForm({ ring, mode, onMode, setRing }: {
         <p>Zone saved, but its alert rule could not be created. This zone will not send alerts yet.</p>
         <p>{warning.message}</p>
         <div className={styles.actions}>
-          <button type="button" className={styles.secondary} onClick={() => rule.mutate(warning.id)} disabled={rule.isPending}>{rule.isPending ? "Retrying…" : "Retry"}</button>
-          <button type="button" className={styles.secondary} onClick={() => setWarning(null)}>Dismiss</button>
+          <button type="button" className={styles.secondary} aria-busy={rule.isPending} onClick={() => rule.mutate(warning.id)} disabled={rule.isPending}>{rule.isPending ? "Retrying…" : "Retry"}</button>
+          <button type="button" className={styles.quiet} onClick={() => setWarning(null)}>Dismiss</button>
         </div>
       </div>}
     </form>
@@ -147,7 +147,7 @@ export function RegisterVehicle() {
       <label>Driver name<input name="driver_name" required /></label>
       <label>Vehicle type<input name="vehicle_type" placeholder="e.g. Truck" required /></label>
       <label>Phone<input name="phone" type="tel" required /></label>
-      <button className={styles.primary} disabled={mutation.isPending}>{mutation.isPending ? "Registering…" : "Register vehicle"}</button>
+      <button className={styles.primary} aria-busy={mutation.isPending} disabled={mutation.isPending}>{mutation.isPending ? "Registering…" : "Register vehicle"}</button>
       <Feedback error={mutation.error} message={mutation.isSuccess ? "Vehicle registered." : undefined} />
     </form>
   );
@@ -198,7 +198,7 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
         <label>Latitude<input required type="number" step="any" min={-90} max={90} value={point[0]} onChange={(event) => setPoint([event.target.value, point[1]])} /></label>
         <label>Longitude<input required type="number" step="any" min={-180} max={180} value={point[1]} onChange={(event) => setPoint([point[0], event.target.value])} /></label>
       </div>
-      <button className={styles.primary} disabled={mutation.isPending}>{mutation.isPending ? "Updating…" : "Update location"}</button>
+      <button className={styles.primary} aria-busy={mutation.isPending} disabled={mutation.isPending}>{mutation.isPending ? "Updating…" : "Update location"}</button>
       <button className={styles.secondary} type="button" onClick={() => onMode(mode === "pick" ? "browse" : "pick")}>
         {mode === "pick" ? "Cancel map selection" : "Pick coordinates on map"}
       </button>
@@ -241,7 +241,7 @@ export const VehicleRow = memo(function VehicleRow({ vehicle, status, fetching, 
     <div className={styles.rowTitle}><strong>{vehicle.vehicle_number}</strong>
       <div className={styles.actions}>
       <button className={styles.secondary} type="button" onClick={() => select(vehicle.id)}>Set location</button>
-        <button className={styles.secondary} type="button" disabled={!status?.current_location} onClick={() => showOnMap(vehicle.id)}>Show on map</button>
+        <button className={styles.quiet} type="button" disabled={!status?.current_location} onClick={() => showOnMap(vehicle.id)}>Show on map</button>
       </div>
     </div>
     <p>{vehicle.driver_name} · {vehicle.vehicle_type}</p>

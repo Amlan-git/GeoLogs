@@ -17,7 +17,7 @@ function HistoryResults({ filters }: { filters: HistoryFilters }) {
     </p>}
     {history.error && <div role="alert" className={styles.error}>
       <p>{history.error.message}</p>
-      <button type="button" className={styles.secondary} disabled={history.isFetching} onClick={() => void history.refetch()}>Retry</button>
+      <button type="button" className={styles.secondary} aria-busy={history.isFetching} disabled={history.isFetching} onClick={() => void history.refetch()}>Retry</button>
     </div>}
     {history.data && count === 0 && <p className={styles.muted}>No crossings match these filters. Try a different vehicle, geofence, or date range.</p>}
     {history.data && history.data.violations.length > 0 && <div className={styles.historyTable} tabIndex={0} role="region" aria-label="Scrollable crossing history">
@@ -26,20 +26,22 @@ function HistoryResults({ filters }: { filters: HistoryFilters }) {
           <th scope="col">Event</th><th scope="col">Coordinates</th></tr></thead>
         <tbody>{history.data.violations.map((event) => <tr key={event.id}>
           <td><time dateTime={event.timestamp}>{formatUTC(event.timestamp)}</time></td>
-          <td>{event.vehicle_number}</td>
+          <td><span className={styles.plate}>{event.vehicle_number}</span></td>
           <td>{event.geofence_name}</td>
-          <td>{event.event_type === "entry" ? "Entry" : "Exit"}</td>
-          <td>{event.latitude}, {event.longitude}</td>
+          <td><span className={event.event_type === "entry" ? styles.entryChip : styles.exitChip}>
+            {event.event_type === "entry" ? "Entry" : "Exit"}
+          </span></td>
+          <td className={styles.coordinates}>{event.latitude.toFixed(4)}, {event.longitude.toFixed(4)}</td>
         </tr>)}</tbody>
       </table>
     </div>}
     {(count > 0 || page > 1) && <nav className={styles.historyPager} aria-label="History pagination">
-      <button type="button" className={styles.secondary} disabled={page <= 1 || history.isFetching}
+      <button type="button" className={styles.secondary} aria-busy={history.isFetching} disabled={page <= 1 || history.isFetching}
         onClick={() => setPage(page - 1)}>Previous</button>
       {history.data && <span>
         {history.isPlaceholderData ? `Loading page ${page} of ${lastPage}` : `Page ${page} of ${lastPage} · ${count} crossings`}
       </span>}
-      <button type="button" className={styles.secondary} disabled={page >= lastPage || history.isFetching}
+      <button type="button" className={styles.secondary} aria-busy={history.isFetching} disabled={page >= lastPage || history.isFetching}
         onClick={() => setPage(page + 1)}>Next</button>
     </nav>}
   </>;

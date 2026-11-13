@@ -30,8 +30,8 @@ export function FleetMap({ zones, located, mode, draft, onDraw, onPick, picked, 
   useEffect(() => {
     const instance = L.map(element.current!).setView([37.7749, -122.4194], 12);
     map.current = instance;
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    L.tileLayer("https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://www.carto.com/attribution/">CARTO</a>',
     }).addTo(instance);
     zoneLayer.current = L.layerGroup().addTo(instance);
     vehicleLayer.current = L.layerGroup().addTo(instance);
@@ -53,7 +53,7 @@ export function FleetMap({ zones, located, mode, draft, onDraw, onPick, picked, 
     for (const zone of zones) {
       const label = document.createElement("span");
       label.textContent = zone.name;
-      L.polygon(zone.coordinates, { color: categories[zone.category].color, weight: 2, fillOpacity: 0.18 }).bindTooltip(label).addTo(layer);
+      L.polygon(zone.coordinates, { color: categories[zone.category].color, weight: 2, fillOpacity: 0.12 }).bindTooltip(label).addTo(layer);
     }
     if (zones.length && !fitted.current) {
       map.current?.fitBounds(L.latLngBounds(zones.flatMap((zone) => zone.coordinates)), { padding: [30, 30], maxZoom: 15 });

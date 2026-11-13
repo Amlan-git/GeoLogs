@@ -27,9 +27,9 @@ function RuleRow({ rule }: { rule: AlertRule }) {
       <label className={styles.ruleSwitch}>
         <input type="checkbox" role="switch"
           aria-label={`Alert rule for ${rule.geofence_name}, ${rule.vehicle_number ?? "all vehicles"}, ${eventLabels[rule.event_type]}`}
-          checked={rule.status === "active"} disabled={toggle.isPending}
+          checked={rule.status === "active"} disabled={toggle.isPending} aria-busy={toggle.isPending}
           onChange={() => toggle.mutate()} />
-        {toggle.isPending ? "Saving…" : rule.status === "active" ? "Active" : "Inactive"}
+        {rule.status === "active" ? "Active" : "Paused"}
       </label>
     </div>
     <p>{rule.vehicle_number ?? "All vehicles"} · {eventLabels[rule.event_type]}</p>
@@ -75,7 +75,7 @@ export function AlertRules({ zones, vehicles }: { zones: Geofence[]; vehicles: V
       <label>Event type<select name="event_type" defaultValue="both">
         {Object.entries(eventLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select></label>
-      <button className={styles.primary} disabled={create.isPending || !zones.length}>
+      <button className={styles.primary} aria-busy={create.isPending} disabled={create.isPending || !zones.length}>
         {create.isPending ? "Saving rule…" : "Create alert rule"}
       </button>
       {create.error && <p role="alert" className={styles.error}>{create.error.message}</p>}
