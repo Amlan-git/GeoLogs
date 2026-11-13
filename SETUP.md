@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Docker Engine or Docker Desktop with Docker Compose v2 for the container setup. The PostGIS image uses `linux/amd64`, so enable amd64 emulation if your Docker host is ARM.
-- Go 1.27.4, Node.js 24 with npm, and PostgreSQL 17 with PostGIS 3.5 available for the setup without Docker.
+- Go 1.27.4, Node.js 24.12.0 with its bundled npm 11.6.2, and PostgreSQL 17 with PostGIS 3.5 available for the setup without Docker.
 - Bash, curl, and Python 3 for the smoke test. Node.js and npm are also needed to run the `wscat` example.
 
 ## Run with Docker Compose
