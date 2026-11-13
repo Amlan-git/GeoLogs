@@ -143,9 +143,11 @@ export function LiveAlertsProvider({ children }: { children: ReactNode }) {
 
 function AlertDetails({ alert }: { alert: LiveAlert }) {
   return <>
-    <strong>{alert.vehicle.vehicle_number} {alert.event_type === "entry" ? "entered" : "exited"} {alert.geofence.geofence_name}</strong>
-    <p>{alert.vehicle.driver_name} · {categories[alert.geofence.category].label}</p>
-    <p><time dateTime={alert.timestamp}>{new Date(alert.timestamp).toLocaleString()}</time> · {alert.location.latitude}, {alert.location.longitude}</p>
+    <strong>{alert.event_type === "entry" ? "Entry" : "Exit"} · {alert.geofence.geofence_name}</strong>
+    <p>{alert.vehicle.vehicle_number} · {alert.vehicle.driver_name}</p>
+    <p>{categories[alert.geofence.category].label}</p>
+    <p><time dateTime={alert.timestamp}>{new Date(alert.timestamp).toLocaleString()}</time></p>
+    <p>Lat {alert.location.latitude}, lon {alert.location.longitude}</p>
   </>;
 }
 
@@ -163,7 +165,7 @@ function Toast({ alert, dismiss }: { alert: LiveAlert; dismiss: (id: string) => 
 
 export function LiveStatus() {
   const { status } = useContext(AlertsContext);
-  return <span className={styles.connection} role="status" aria-label={`Alert connection: ${status}`}>{status}</span>;
+  return <span className={styles.connection} role="status" aria-label={`Alert connection: ${status}`}>Alerts · {status}</span>;
 }
 
 export function LiveFeed() {
