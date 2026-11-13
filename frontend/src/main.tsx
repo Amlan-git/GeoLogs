@@ -1,6 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { AlertRules } from "./AlertRules";
+import { LiveAlertsProvider, LiveFeed, LiveStatus } from "./LiveAlerts";
+import { ViolationHistory } from "./ViolationHistory";
 import { FleetMap } from "./FleetMap";
 import type { Coordinates, Geofence } from "./api";
 import { GeofenceList, LocationForm, RegisterVehicle, VehicleRow, ZoneForm, type MapMode } from "./FleetForms";
@@ -54,6 +57,7 @@ function Dashboard() {
       <header className={styles.header}>
         <div className={styles.brand}><span className={styles.brandMark} aria-hidden="true">◈</span>GeoLog</div>
         <span className={styles.headerLabel}>Fleet operations</span>
+        <LiveStatus />
       </header>
       <main className={styles.main}>
         <h1>Fleet map</h1>
@@ -97,11 +101,18 @@ function Dashboard() {
           </section>
           <section className={styles.panel}><RegisterVehicle /></section>
         </div>
+        <div className={styles.workspace}>
+          <AlertRules zones={zones.data?.geofences ?? noZones} vehicles={vehicles} />
+          <LiveFeed />
+        </div>
+        <ViolationHistory zones={zones.data?.geofences ?? noZones} vehicles={vehicles} />
       </main>
     </>
   );
 }
 
 createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={client}><Dashboard /></QueryClientProvider>,
+  <QueryClientProvider client={client}>
+    <LiveAlertsProvider><Dashboard /></LiveAlertsProvider>
+  </QueryClientProvider>,
 );

@@ -132,10 +132,11 @@ export function LocationForm({ vehicles, vehicleID, setVehicleID, point, setPoin
   const mutation = useMutation({
     mutationFn: (sample: { vehicle_id: string; latitude: number; longitude: number; timestamp: string }) =>
       write<{ location_updated: boolean }>("/vehicles/location", sample),
-    onSuccess: (_, sample) => {
+    onSuccess: (result, sample) => {
       setTimestamp("");
       onSubmitted();
       void client.invalidateQueries({ queryKey: keys.vehicle(sample.vehicle_id) });
+      if (result.location_updated) void client.invalidateQueries({ queryKey: keys.violationPages });
     },
   });
   return (

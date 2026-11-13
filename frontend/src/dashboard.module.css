@@ -46,3 +46,19 @@
   box-shadow: 0 1px 4px #182239aa;
   transform: rotate(-45deg);
 }
+.connection { margin-left: auto; color: #e5f1ff; font-size: 14px; }
+.ruleSwitch { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.alertFeed { max-height: 400px; overflow: auto; }
+.restrictedAlert { border-left: 3px solid #b72538; background: #fff0f1; color: #842232; padding: 8px; border-radius: 5px; }
+.toasts { position: fixed; z-index: 1100; bottom: 16px; right: 16px; width: min(340px, calc(100% - 32px)); display: grid; gap: 8px; }
+.toast { padding: 12px; border: 1px solid #c9d5e3; border-radius: 8px; box-shadow: 0 4px 18px #12203830; background: white; overflow-wrap: anywhere; }
+.toast p { margin: 5px 0; }
+.toast.restrictedAlert { background: #fff0f1; border-color: #b72538; border-left-width: 4px; }
+.history { margin-top: 18px; }
+.historyFilters { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 12px 0; }
+.historyTable { overflow-x: auto; }
+.historyTable table { border-collapse: collapse; width: 100%; text-align: left; font-size: 14px; }
+.historyTable th, .historyTable td { padding: 10px; border-bottom: 1px solid #e0e6ef; }
+.historyTable th { background: #f2f6fc; }
+.historyTable td:first-child { white-space: nowrap; }
+.historyPager { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
