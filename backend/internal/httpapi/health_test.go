@@ -20,7 +20,7 @@ func TestHealth(t *testing.T) {
 		{"unavailable", errors.New("database unavailable"), http.StatusServiceUnavailable},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			handler := NewRouter(func(context.Context) error { return tc.dbErr }, "https://geolog.example")
+			handler := NewRouter(func(context.Context) error { return tc.dbErr }, "https://geolog.example", nil)
 			req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 			req.Header.Set("Origin", "https://geolog.example")
 			res := httptest.NewRecorder()

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"geolog/internal/httpapi"
+	"geolog/internal/service"
 	"geolog/migrations"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -55,7 +56,7 @@ func run() error {
 	}
 	server := &http.Server{
 		Addr:              net.JoinHostPort("0.0.0.0", port),
-		Handler:           httpapi.NewRouter(pool.Ping, os.Getenv("ALLOWED_ORIGINS")),
+		Handler:           httpapi.NewRouter(pool.Ping, os.Getenv("ALLOWED_ORIGINS"), service.NewCatalog(pool)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	serverErrors := make(chan error, 1)

@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"geolog/internal/service"
 )
 
-func NewRouter(ping func(context.Context) error, allowedOrigins string) http.Handler {
+func NewRouter(ping func(context.Context) error, allowedOrigins string, catalog *service.Catalog) http.Handler {
 	router := http.NewServeMux()
 	router.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
@@ -17,11 +19,15 @@ func NewRouter(ping func(context.Context) error, allowedOrigins string) http.Han
 		defer cancel()
 
 		if err := ping(ctx); err != nil {
-			writeJSON(w, started, http.StatusServiceUnavailable, map[string]string{"error": "Database unavailable"})
+			writeJSON(w, started, http.StatusServiceUnavailable, map[string]any{"error": "Database unavailable"})
 			return
 		}
-		writeJSON(w, started, http.StatusOK, map[string]string{"status": "ok"})
+		writeJSON(w, started, http.StatusOK, map[string]any{"status": "ok"})
 	})
+
+	if catalog != nil {
+		registerCatalog(router, catalog)
+	}
 
 	origins := strings.Split(allowedOrigins, ",")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +51,7 @@ func NewRouter(ping func(context.Context) error, allowedOrigins string) http.Han
 	})
 }
 
-func writeJSON(w http.ResponseWriter, started time.Time, status int, body map[string]string) {
+func writeJSON(w http.ResponseWriter, started time.Time, status int, body map[string]any) {
 	body["time_ns"] = strconv.FormatInt(time.Since(started).Nanoseconds(), 10)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
